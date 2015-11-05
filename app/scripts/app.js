@@ -73,8 +73,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   };
 
   app.onFabClick = function() {
-    var dialog = document.querySelector('#dialog');
-    dialog.open();
+    this.$.dialog.open();
   };
 
 })(document);
