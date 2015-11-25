@@ -1,0 +1,682 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/iron-meta/iron-meta.html">
+<link rel="import" href="../../bower_components/iron-media-query/iron-media-query.html">
+<link rel="import" href="../../bower_components/neon-animation/neon-animated-pages.html">
+<link rel="import" href="../../bower_components/neon-animation/neon-animatable.html">
+<link rel="import" href="../../bower_components/neon-animation/neon-animations.html">
+<link rel="import" href="../../bower_components/neon-animation/neon-shared-element-animatable-behavior.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="paper-calendar-weeks.html">
+<link rel="import" href="paper-calendar-years.html">
+<link rel="import" href="paper-date-utils.html"/>
+
+<dom-module id="paper-calendar">
+
+  <style>
+    :host {
+      display: inline-block;
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: Roboto;
+      font-size: 12px;
+      line-height: 24px;
+      background: var(--paper-calendar-background, white);
+      color: var(--paper-text-color, --primary-text-color);
+    }
+    :host * {
+     cursor: default;
+    }
+    paper-material {
+      z-index: 0;
+    }
+    #selectedWeekdayHeader {
+      color: #FFF;
+      height: 36px;
+      background: var(--paper-calendar-header-color);
+      overflow: hidden;
+      -webkit-transition: all .3s;
+      transition: all .3s;
+    }
+    .selectedWeekday {
+      font-size: 14px;
+      line-height: 36px;
+      text-align: center;
+      margin: 0;
+      font-weight: 400;
+    }
+    #selectedDateHeader {
+      box-sizing: border-box;
+      background: rgba(255, 255, 255, 0.05);
+      color: #FFF;
+      padding: 12px 0;
+      -webkit-transition: all .3s;
+      transition: all .3s;
+    }
+    :host #selectedDateHeader {
+      background: var(--paper-calendar-accent);
+    }
+    #selectedDateHeader > div {
+      width: 100%;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .selectedWeekday {
+      font-size: 14px;
+      line-height: 36px;
+      text-align: center;
+      margin: 0;
+      font-weight: 400;
+    }
+    #selectedMonth,
+    #selectedYear {
+      height: 30px;
+    }
+    #selectedDay {
+      height: 60px;
+    }
+    .selectedMonth,
+    .selectedYear {
+      font-size: 22px;
+      font-weight: 400;
+      line-height: 30px;
+      letter-spacing: 0.05em;
+    }
+    .selectedDay {
+      font-size: 60px;
+      line-height: 60px;
+    }
+    .selectedYear {
+      color: rgba(255, 255, 255, 0.6);
+    }
+    #wrapper[horizontal] #selectedMonth,
+    #wrapper[horizontal] #selectedYear {
+      height: 50px;
+    }
+    #wrapper[horizontal] #selectedDay {
+      height: 90px;
+    }
+    #wrapper[horizontal] .selectedMonth,
+    #wrapper[horizontal] .selectedYear {
+      font-size: 24px;
+      font-weight: 400;
+      line-height: 50px;
+      letter-spacing: 0.05em;
+    }
+    #wrapper[horizontal] .selectedDay {
+      font-size: 86px;
+      line-height: 90px;
+    }
+    #calendar {
+
+    }
+    #header {
+      position: relative;
+      overflow: hidden;
+      padding: 0 9px;
+      margin-bottom: 0px;
+    }
+    #header paper-icon-button {
+      margin: 4px 0;
+      transition: all .1s;
+    }
+    #header paper-icon-button:active {
+      color: var(--paper-calendar-header-color);
+    }
+    #viewingMonthYear {
+      overflow: hidden;
+    }
+    .viewingMonthYear {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 48px;
+      letter-spacing: 0.02em;
+      text-align: center;
+    }
+    .weekday-name {
+      font-weight: 500;
+      width: 36px;
+      text-align: center;
+      color: rgba(255,255,255,0.2);
+    }
+    :host .weekday-name{
+      color: rgba(0,0,0,0.3);
+    }
+    #views {
+      height: 300px;
+      width: 276px;
+      overflow: hidden;
+    }
+    #calendar-selection {
+      width: 276px;
+    }
+    .weekday {
+      margin: 0 12px;
+    }
+    .slideup,
+    ::shadow .slideup {
+      transition: all .4s cubic-bezier(0.390, 0.575, 0.135, 0.995);
+      -webkit-transition: all .4s cubic-bezier(0.390, 0.575, 0.135, 0.995);
+      position: absolute;
+      -webkit-transform: translateY(100%);
+      transform: translateY(100%);
+      top: 0;
+      right: 0;
+      left: 0;
+      bottom: 0;
+      opacity: 0;
+      z-index: 0;
+    }
+    .slideup.in,
+    ::shadow .slideup.in {
+      -webkit-transform: translateY(0px);
+      transform: translateY(0px);
+      z-index: 1;
+      opacity: 0.9;
+    }
+    .slideup.out,
+    ::shadow .slideup.out {
+      -webkit-transform: translateY(-100%);
+      transform: translateY(-100%);
+      z-index: 0;
+      opacity: 0;
+    }
+    .slideleft {
+      transition: all .3s cubic-bezier(0.390, 0.575, 0.135, 0.995);
+      -webkit-transition: all .3s cubic-bezier(0.390, 0.575, 0.135, 0.995);
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      -webkit-transform: translateX(100%);
+      transform: translateX(100%);
+    }
+    .slideleft.in {
+      -webkit-transform: translateX(0);
+      transform: translateX(0);
+    }
+    .slideleft.out {
+      -webkit-transform: translateX(-100%);
+      transform: translateX(-100%);
+    }
+  </style>
+
+  <template>
+
+    <iron-media-query query="(max-height: 360px)" query-matches="{{landscape}}"></iron-media-query>
+
+    <paper-date-utils id="dateUtils"></paper-date-utils>
+
+    <paper-material elevation="{{elevation}}">
+
+      <div id="wrapper" class="layout" horizontal$="{{landscape}}" vertical$="{{!landscape}}">
+        <div id="calendar-selection" hidden$="{{!header}}">
+          <div id="selectedWeekdayHeader" class="layout horizontal">
+            <div class="relative flex" id="selectedWeekday">
+              <div class="selectedWeekday slideup">{{selectedWeekday}}</div>
+            </div>
+          </div>
+
+          <div id="selectedDateHeader" class="layout vertical center center-justified">
+            <div id="selectedMonth">
+              <div class="selectedMonth slideup" style="text-transform: uppercase">{{selectedMonth}}</div>
+            </div>
+            <div id="selectedDay">
+              <div class="selectedDay slideup" view="dateView" on-tap="{{viewSelectAction}}">{{selectedDay}}</div>
+            </div>
+            <div id="selectedYear">
+              <div class="selectedYear slideup" view="yearView" on-tap="{{viewSelectAction}}">{{selectedYear}}</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="calendar" class="layout vertical">
+          <neon-animated-pages id="views" selected="{{selectedView}}" attr-for-selected="view">
+            <neon-animatable view="dateView" id="date">
+              <div>
+                <div id="header" class="layout horizontal">
+                  <paper-icon-button icon="chevron-left" on-tap="prevAction" noink></paper-icon-button>
+                  <div class="flex relative" id="viewingMonthYear">
+                    <h4 class="viewingMonthYear slideleft">{{viewingMonth}} <span view="yearView" on-tap="viewSelectAction" id="poo">{{viewingYear}}</span></h4>
+                  </div>
+                  <paper-icon-button icon="chevron-right" on-tap="nextAction" noink></paper-icon-button>
+                </div>
+
+                <div class="weekday layout horizontal center">
+                  <template is="dom-repeat" items="{{weekdays}}" as="weekday">
+                    <div class="weekday-name">{{weekday}}</div>
+                  </template>
+                </div>
+
+                <paper-calendar-weeks
+                  date="{{viewingDate}}"
+                  selected-date="{{selectedDate}}"
+                  on-paper-calendar-day-selected="dateSelectAction">
+                </paper-calendar-weeks>
+              </div>
+            </neon-animatable>
+
+            <neon-animatable view="yearView" id="year">
+              <paper-calendar-years
+                on-paper-calendar-year-selected="yearSelectAction"
+                viewing-year="{{viewingYear}}">
+              </paper-calendar-years>
+            </neon-animatable>
+          </neon-animated-pages>
+        </div>
+      </div>
+
+    </paper-material>
+
+  </template>
+
+</dom-module>
+
+<script>
+  Polymer({
+    is: 'paper-calendar',
+
+    properties: {
+      elevation: String,
+      selectedDate: {
+        type: String,
+        observer: 'selectedDateChanged'
+      },
+      viewingDate: {
+        type: String,
+        observer: 'viewingDateChanged'
+      },
+      viewingYear: {
+        type: String,
+        observer: 'viewingYearChanged'
+      },
+      header: {
+        type: Boolean,
+        value: false
+      },
+      selectedView: {
+        type: String,
+        value: 'dateView'
+      },
+      lang: {
+        type: String,
+        value: 'en'
+      }
+    },
+
+    getFullMonth: function(d) {
+      return (d && d.getTime) ? this.locale[this.lang].monthNames[d.getMonth()] : null;
+    },
+
+    getShortMonth: function(d) {
+      return (d && d.getTime) ? this.locale[this.lang].shortMonthNames[d.getMonth()] : null;
+    },
+
+    getDayOfWeek: function(d) {
+      return (d && d.getTime) ? this.locale[this.lang].dayNames[d.getDay()] : null;
+    },
+
+    getShortDayNames: function() {
+      return this.locale[this.lang].shortDayNames;
+    },
+
+    created: function() {
+      this.locale = {
+        'en': {
+          monthNames: [
+              'January',
+              'February',
+              'March',
+              'April',
+              'May',
+              'June',
+              'July',
+              'August',
+              'September',
+              'October',
+              'November',
+              'December'
+          ],
+
+          shortMonthNames: [
+              'Jan',
+              'Feb',
+              'Mar',
+              'Apr',
+              'May',
+              'Jun',
+              'Jul',
+              'Aug',
+              'Sep',
+              'Oct',
+              'Nov',
+              'Dec'
+          ],
+
+          dayNames: [
+              'Sunday',
+              'Monday',
+              'Tuesday',
+              'Wednesday',
+              'Thursday',
+              'Friday',
+              'Saturday'
+          ],
+
+          shortDayNames: [
+              'S',
+              'M',
+              'T',
+              'W',
+              'T',
+              'F',
+              'S'
+          ]
+        },
+        'es': {
+          monthNames: [
+              'Enero',
+              'Febrero',
+              'Marzo',
+              'Abril',
+              'Mayo',
+              'Junio',
+              'Julio',
+              'Agosto',
+              'Septiembre',
+              'Octubre',
+              'Noviembre',
+              'Diciembre'
+          ],
+
+          shortMonthNames: [
+              'Ene',
+              'Feb',
+              'Mar',
+              'Abr',
+              'May',
+              'Jun',
+              'Jul',
+              'Ago',
+              'Sep',
+              'Oct',
+              'Nov',
+              'Dic'
+          ],
+
+          dayNames: [
+              'Domingo',
+              'Lunes',
+              'Martes',
+              'Miércoles',
+              'Jueves',
+              'Viernes',
+              'Sábado'
+          ],
+
+          shortDayNames: [
+              'D',
+              'L',
+              'M',
+              'X',
+              'J',
+              'V',
+              'S'
+          ]
+        },
+        'zh-CN': {
+          monthNames: [
+              '一月',
+              '二月',
+              '三月',
+              '四月',
+              '五月',
+              '六月',
+              '七月',
+              '八月',
+              '九月',
+              '十月',
+              '十一月',
+              '十二月'
+          ],
+
+          shortMonthNames: [
+              '一',
+              '二',
+              '三',
+              '四',
+              '五',
+              '六',
+              '七',
+              '八',
+              '九',
+              '十',
+              '十一',
+              '十二'
+          ],
+
+          dayNames: [
+              '星期天',
+              '星期一',
+              '星期二',
+              '星期三',
+              '星期四',
+              '星期五',
+              '星期六'
+          ],
+
+          shortDayNames: [
+              '日',
+              '一',
+              '二',
+              '三',
+              '四',
+              '五',
+              '六'
+          ]
+        }
+      };
+    },
+
+    ready: function() {
+      this.dateUtils = this.$.dateUtils;
+
+      if (!this.selectedDate) {
+        this.selectedDate = new Date();
+      }
+      else {
+        this.selectedDate = new Date(this.selectedDate);
+      }
+
+      this.weekdays = this.getShortDayNames();
+      this.viewingDate = this.viewingDate || new Date(this.selectedDate);
+      this.viewingDate.setDate(1);
+      this.nowDate = new Date();
+
+      this.$.date.behaviors = [this.$.date.behaviors, Polymer.NeonSharedElementAnimatableBehavior];
+      this.$.year.behaviors = [this.$.year.behaviors, Polymer.NeonSharedElementAnimatableBehavior];
+
+      this.$.date.animationConfig = {
+        'entry':[{
+          name: 'fade-in-animation',
+          node: this.$.date,
+          timing: {
+            delay: 200
+          }
+        }],
+
+        'exit': [{
+          name: 'hero-animation',
+          id: 'hero',
+          fromPage: this.$.date
+        }, {
+          name: 'fade-out-animation',
+          node: this.$.date,
+          timing: {
+            duration: 0
+          }
+        }]
+      };
+
+      this.$.year.animationConfig = {
+        'entry': [{
+          name: 'hero-animation',
+          id: 'hero',
+          toPage: this.$.year
+        }, {
+          name: 'fade-in-animation',
+          node: this.$.year
+        }],
+
+        'exit': [{
+          name: 'fade-out-animation',
+          node: this.$.year
+        }]
+      };
+
+      this.$.date.sharedElements = {
+        'hero': this.$.poo
+      };
+
+      addEventListener('keyup', this.keyup.bind(this));
+    },
+
+    selectedDateChanged: function(newdate, olddate) {
+      if (olddate && !olddate.getTime){
+        olddate = new Date(olddate);
+      }
+
+      if (newdate && !newdate.getTime) {
+        newdate = new Date(newdate);
+        if (!newdate.getTime){
+          return;
+        }
+        this.selectedDate = newdate;
+      }
+
+      this.reverseAnimation = olddate && olddate.getTime() > newdate.getTime();
+      this.updateSelectedDateProps(newdate, olddate);
+      this.fire('paper-calendar-date-selected', {date: this.selectedDate});
+    },
+
+    viewingDateChanged: function(newdate, olddate) {
+      this.reverseAnimation = olddate && olddate.getTime() > newdate.getTime();
+      this.updateViewingDateProps();
+    },
+
+    viewingYearChanged: function() {
+      this.$.year.sharedElements = {
+        'hero': this.$.year.querySelector('#hero')
+      };
+    },
+
+    updateSelectedDateProps: function(newdate, olddate) {
+      if (this.getDayOfWeek(newdate) !== this.getDayOfWeek(olddate)) {
+        this.renderNode(this.$$('.selectedWeekday'), this.reverseAnimation);
+      }
+      if (this.getShortMonth(newdate) !== this.getShortMonth(olddate)) {
+        this.renderNode(this.$$('.selectedMonth'), this.reverseAnimation);
+      }
+      if (!olddate || newdate.getFullYear() !== olddate.getFullYear()) {
+        this.renderNode(this.$$('.selectedYear'), this.reverseAnimation);
+      }
+      if (!olddate || newdate.getDate() !== olddate.getDate()) {
+        this.renderNode(this.$$('.selectedDay'), this.reverseAnimation);
+      }
+
+      this.async(function() {
+        this.selectedWeekday = this.getDayOfWeek(this.selectedDate);
+        this.selectedMonth = this.getShortMonth(this.selectedDate);
+        this.selectedYear = this.selectedDate.getFullYear();
+        this.selectedDay = this.selectedDate.getDate();
+      });
+    },
+
+    updateViewingDateProps: function() {
+      this.renderNode(this.$$('.viewingMonthYear'), this.reverseAnimation);
+
+      this.async(function() {
+        this.viewingMonth = this.getFullMonth(this.viewingDate);
+        this.viewingYear = this.viewingDate.getFullYear();
+      });
+    },
+
+    nextAction: function() {
+      this.viewingDate = this.dateUtils.addMonths(this.viewingDate, 1);
+    },
+
+    prevAction: function() {
+      this.viewingDate = this.dateUtils.addMonths(this.viewingDate, -1);
+    },
+
+    viewSelectAction: function(e) {
+      this.selectedView = (e.target.getAttribute('view'));
+    },
+
+    dateSelectAction: function(e) {
+      this.selectedDate = new Date(e.detail.day);
+    },
+
+    yearSelectAction: function(e) {
+      var year = e.detail.year;
+
+      this.disablePropertyAnimations = true;
+      this.viewingDate = new Date(year, this.viewingDate.getMonth(), 1);
+      this.async(function(){
+        this.$.views.selected = 'dateView';
+        this.disablePropertyAnimations = false;
+      });
+    },
+
+    renderNode: function(element, reverse) {
+      if (this.disablePropertyAnimations){
+        return;
+      }
+      var delayRemovalTime = 400;
+      var el = element;
+      var elClone = el.cloneNode(true);
+
+      el._originalTransition = element.style.transition;
+      el.style.transition = 'none';
+      el.parentElement.appendChild(elClone);
+
+      if (!reverse) {
+        el.classList.remove('in'); // back to start position immediately
+      } else {
+        el.classList.add('out'); // go to end position immediately
+      }
+
+      this.async(function() {
+        el.style.transition = el._originalTransition;
+        if (!reverse) {
+          elClone.classList.add('out'); // animate to end position
+        } else {
+          elClone.classList.remove('in'); // animate to start position
+          el.classList.remove('out'); // animate to start position
+        }
+        el.classList.add('in');
+      }, 50);
+
+      this.async(function() {
+        try {
+          el.parentElement.removeChild(elClone);
+        } catch (err) {
+          console.log(err.message);
+        }
+      }, delayRemovalTime);
+    },
+
+    keyup: function(e){
+      switch (e.keyCode) {
+        case 37:
+          this.prevAction();
+          break;
+        case 39:
+          this.nextAction();
+          break;
+      }
+    }
+  });
+</script>

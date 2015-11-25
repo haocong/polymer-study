@@ -1,0 +1,205 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="paper-date-utils.html"/>
+
+<!--
+Element for displaying the grid of days in each month.
+
+@element d-calendar-week
+@blurb Element for displaying the grid of days in each month.
+@status alpha
+@homepage https://github.com/subpopular/d-calendar-week
+-->
+
+<!--
+Fired when selecting a specific day of the month.
+
+@event d-calendar-date-selected
+@param {Object} detail
+  @param {string} detail.date the selected date
+-->
+
+<dom-module id="paper-calendar-weeks">
+
+  <style>
+
+    #days {
+      position: relative;
+      overflow: hidden;
+      height: 216px;
+      z-index: 0;
+    }
+
+    .weeks {
+      padding: 0 12px;
+      box-sizing: border-box;
+    }
+
+    .day {
+      box-sizing: border-box;
+      cursor: pointer;
+      width: 36px;
+      height: 36px;
+      position: relative;
+    }
+
+    .day.currentday {
+      font-weight: 500;
+      color: var(--paper-calendar-header-color);
+    }
+
+    .day:after {
+      content: '';
+      border-radius: 50%;
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      bottom: 3px;
+      left: 3px;
+      background: var(--paper-calendar-header-color);
+      z-index: 0;
+      -webkit-transform: scale(0);
+      transform: scale(0);
+      opacity: 0;
+      transition: all .2s cubic-bezier(0.175, 0.885, 0.320, 1.275);
+      -webkit-transition: all .2s cubic-bezier(0.175, 0.885, 0.320, 1.275);
+    }
+
+    .day[selected]:after {
+      -webkit-transform: scale(1);
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    .day div {
+      z-index: 1;
+      transition: all .2s;
+      -webkit-transition: all .2s;
+    }
+
+    .day[selected] div {
+      color: #FFF;
+      font-weight: 600;
+    }
+
+    .slideleft {
+      transition: all .3s cubic-bezier(0.390, 0.575, 0.135, 0.995);
+      -webkit-transition: all .3s cubic-bezier(0.390, 0.575, 0.135, 0.995);
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      -webkit-transform: translateX(100%);
+      transform: translateX(100%);
+    }
+    .slideleft.in {
+      -webkit-transform: translateX(0);
+      transform: translateX(0);
+    }
+    .slideleft.out {
+      -webkit-transform: translateX(-100%);
+      transform: translateX(-100%);
+    }
+
+  </style>
+
+  <template>
+
+    <paper-date-utils id="dateUtils"></paper-date-utils>
+
+    <div id="days">
+      <div class="weeks slideleft">
+        <div class="layout horizontal wrap">
+          <template is="dom-repeat" items="[[weeks]]" as="week" index-as="w">
+            <template is="dom-repeat" items="[[week]]" as="date" index-as="d">
+              <div
+                class$="layout horizontal center-justified day[[date.curClass]][[date.offClass]]"
+                date$="[[date.fullDate]]"
+                selected$="[[date.selected]]"
+                on-tap="selectDay">
+                <div class="layout horizontal center">[[date.shortDate]]</div>
+              </div>
+            </template>
+          </template>
+        </div>
+      </div>
+    </div>
+
+  </template>
+
+</dom-module>
+
+<script>
+
+  Polymer({
+
+    is: 'paper-calendar-weeks',
+
+    properties: {
+      date: {
+        type: String,
+        observer: 'dateChanged'
+      },
+      selectedDate: {
+        type: String
+      }
+    },
+
+    observers: [
+      'weeksChanged(date, selectedDate)'
+    ],
+
+    ready: function() {
+      this.dateUtils = this.$.dateUtils;
+      this.nowDate = new Date();
+    },
+
+    isSameDay: function(d1, d2) {
+      return this.dateUtils.isEqualDate(d1, d2);
+    },
+
+    isSameMonth: function(d1, d2) {
+      return this.dateUtils.isEqualMonth(d1, d2);
+    },
+
+    weeksChanged: function(date, selected) {
+      this.async(function() {
+        var weeksFull = this.dateUtils.getWeekArray(date);
+        this.weeks = this.enhanceWeeks(weeksFull);
+      });
+    },
+
+    dateChanged: function(newDate, oldDate) {
+      // if the month & year hasn't changed, no need to update
+      if (this.dateUtils.isEqualMonth(oldDate, newDate)) {
+        return;
+      }
+      this.reverseAnimation = oldDate && oldDate.getTime() > newDate.getTime();
+      this.dataHost.renderNode(this.$.days.querySelector('.weeks'), this.reverseAnimation);
+    },
+
+    enhanceWeeks: function(full) {
+      var self = this;
+      return full.map(function(week) {
+        if (!week || week === null) {
+          return null;
+        }
+        return week.map(function(day) {
+          return {
+            fullDate: day,
+            shortDate: day ? day.getDate() : null,
+            offClass: !self.isSameMonth(day, self.date) ? ' offday':'',
+            curClass: self.isSameDay(day, self.nowDate) ? ' currentday' : '',
+            selected: self.isSameDay(day, self.selectedDate)
+          };
+        });
+      });
+    },
+
+    selectDay: function(e) {
+      var selectedDate = e.target.hasAttribute('date') ? e.target.getAttribute('date') : e.target.parentNode.getAttribute('date');
+      this.fire('paper-calendar-day-selected', {day: selectedDate});
+    }
+  });
+
+</script>
