@@ -1,10 +1,10 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
-<link rel="import" href="../../bower_components/paper-button/paper-button.html"/>
-<link rel="import" href="paper-date-utils.html"/>
+<link rel="import" href="paper-date-utils.html">
 
 <dom-module id="paper-calendar-years">
 
   <style>
+
     #years {
       box-sizing: border-box;
       height: 300px;
@@ -12,21 +12,24 @@
       padding: 6px;
       overflow: auto;
     }
+
     .year {
       width: 33.3%;
       text-align: center;
-      font-weight: 500;
       font-size: 14px;
       line-height: 36px;
     }
+
     .year paper-button {
       display: block;
       width: 100%;
       margin: 0;
     }
+
     paper-button {
       color: var(--primary-text-color);
     }
+
   </style>
 
   <template>
@@ -35,7 +38,7 @@
 
     <div id="years" class="layout horizontal wrap">
       <template is="dom-repeat" items="{{yearsArray}}" as="year" index-as="i">
-        <div class="year" class="layout horizontal center center-justified" id="{{isHero(i, startYear, viewingYear)}}">
+        <div class$="layout horizontal center center-justified year{{isHero(i, startYear, viewingYear)}}">
           <paper-button year$="{{computedYear(i, startYear)}}" on-tap="yearSelected">{{computedYear(i, startYear)}}</paper-button>
         </div>
       </template>
@@ -46,6 +49,7 @@
 </dom-module>
 
 <script>
+
   Polymer({
 
     is: 'paper-calendar-years',
@@ -80,11 +84,12 @@
     },
 
     isHero: function(i, start, viewing) {
-      return i + start === viewing ? 'hero' : '';
+      return i + start === viewing ? ' hero' : '';
     },
 
     computedYear: function(i, start) {
       return i + start;
     }
   });
+
 </script>
