@@ -7,6 +7,7 @@
 <link rel="import" href="../../bower_components/neon-animation/neon-animations.html">
 <link rel="import" href="../../bower_components/neon-animation/neon-shared-element-animatable-behavior.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="paper-calendar-fonts.html">
 <link rel="import" href="paper-calendar-weeks.html">
 <link rel="import" href="paper-calendar-years.html">
 <link rel="import" href="paper-date-utils.html"/>
@@ -18,7 +19,7 @@
       display: inline-block;
       user-select: none;
       -webkit-user-select: none;
-      font-family: Roboto;
+      font-family: 'RobotoDraft', sans-serif;
       font-size: 12px;
       line-height: 24px;
       background: var(--paper-calendar-background, white);
@@ -235,27 +236,25 @@
         <div id="calendar" class="layout vertical">
           <neon-animated-pages id="views" selected="{{selectedView}}" attr-for-selected="view">
             <neon-animatable view="dateView" id="date">
-              <div>
-                <div id="header" class="layout horizontal">
-                  <paper-icon-button icon="chevron-left" on-tap="prevAction" noink></paper-icon-button>
-                  <div class="flex relative" id="viewingMonthYear">
-                    <h4 class="viewingMonthYear slideleft">{{viewingMonth}} <span view="yearView" on-tap="viewSelectAction" id="poo">{{viewingYear}}</span></h4>
-                  </div>
-                  <paper-icon-button icon="chevron-right" on-tap="nextAction" noink></paper-icon-button>
+              <div id="header" class="layout horizontal">
+                <paper-icon-button icon="chevron-left" on-tap="prevAction" noink></paper-icon-button>
+                <div class="flex relative" id="viewingMonthYear">
+                  <h4 class="viewingMonthYear slideleft">{{viewingMonth}} <span view="yearView" on-tap="viewSelectAction" id="poo">{{viewingYear}}</span></h4>
                 </div>
-
-                <div class="weekday layout horizontal center">
-                  <template is="dom-repeat" items="{{weekdays}}" as="weekday">
-                    <div class="weekday-name">{{weekday}}</div>
-                  </template>
-                </div>
-
-                <paper-calendar-weeks
-                  date="{{viewingDate}}"
-                  selected-date="{{selectedDate}}"
-                  on-paper-calendar-day-selected="dateSelectAction">
-                </paper-calendar-weeks>
+                <paper-icon-button icon="chevron-right" on-tap="nextAction" noink></paper-icon-button>
               </div>
+
+              <div class="weekday layout horizontal center">
+                <template is="dom-repeat" items="{{weekdays}}" as="weekday">
+                  <div class="weekday-name">{{weekday}}</div>
+                </template>
+              </div>
+
+              <paper-calendar-weeks
+                date="{{viewingDate}}"
+                selected-date="{{selectedDate}}"
+                on-paper-calendar-day-selected="dateSelectAction">
+              </paper-calendar-weeks>
             </neon-animatable>
 
             <neon-animatable view="yearView" id="year">
