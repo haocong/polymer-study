@@ -1,27 +1,48 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
-<link rel="import" href="../../bower_components/iron-flex-layout/classes/iron-flex-layout.html">
-<link rel="import" href="paper-date-utils.html"/>
-
-<!--
-Element for displaying the grid of days in each month.
-
-@element d-calendar-week
-@blurb Element for displaying the grid of days in each month.
-@status alpha
-@homepage https://github.com/subpopular/d-calendar-week
--->
-
-<!--
-Fired when selecting a specific day of the month.
-
-@event d-calendar-date-selected
-@param {Object} detail
-  @param {string} detail.date the selected date
--->
+<link rel="import" href="paper-date-utils.html">
 
 <dom-module id="paper-calendar-weeks">
 
   <style>
+
+    #header {
+      position: relative;
+      overflow: hidden;
+      padding: 0 9px;
+      margin-bottom: 0px;
+    }
+
+    #header paper-icon-button {
+      margin: 4px 0;
+      transition: all .1s;
+    }
+
+    #header paper-icon-button:active {
+      color: var(--paper-calendar-header-color);
+    }
+
+    #viewingMonthYear {
+      overflow: hidden;
+    }
+
+    .viewingMonthYear {
+      margin: 0;
+      font-size: 16px;
+      line-height: 48px;
+      letter-spacing: 0.02em;
+      text-align: center;
+    }
+
+    .weekday {
+      margin: 0 12px;
+    }
+
+    .weekday-name {
+      font-weight: 500;
+      width: 36px;
+      text-align: center;
+      color: rgba(0,0,0,0.3);
+    }
 
     #days {
       position: relative;
@@ -82,30 +103,25 @@ Fired when selecting a specific day of the month.
       font-weight: 600;
     }
 
-    .slideleft {
-      transition: all .3s cubic-bezier(0.390, 0.575, 0.135, 0.995);
-      -webkit-transition: all .3s cubic-bezier(0.390, 0.575, 0.135, 0.995);
-      width: 100%;
-      position: absolute;
-      top: 0;
-      left: 0;
-      -webkit-transform: translateX(100%);
-      transform: translateX(100%);
-    }
-    .slideleft.in {
-      -webkit-transform: translateX(0);
-      transform: translateX(0);
-    }
-    .slideleft.out {
-      -webkit-transform: translateX(-100%);
-      transform: translateX(-100%);
-    }
-
   </style>
 
   <template>
 
     <paper-date-utils id="dateUtils"></paper-date-utils>
+
+    <div id="header" class="layout horizontal">
+      <paper-icon-button icon="chevron-left" on-tap="prevAction" noink></paper-icon-button>
+      <div class="flex relative" id="viewingMonthYear">
+        <h4 class="viewingMonthYear slideleft">{{viewingMonth}} <span view="yearView" on-tap="viewSelectAction" class="hero">{{viewingYear}}</span></h4>
+      </div>
+      <paper-icon-button icon="chevron-right" on-tap="nextAction" noink></paper-icon-button>
+    </div>
+
+    <div class="weekday layout horizontal center">
+      <template is="dom-repeat" items="{{weekdays}}" as="weekday">
+        <div class="weekday-name">{{weekday}}</div>
+      </template>
+    </div>
 
     <div id="days">
       <div class="weeks slideleft">
@@ -140,9 +156,7 @@ Fired when selecting a specific day of the month.
         type: String,
         observer: 'dateChanged'
       },
-      selectedDate: {
-        type: String
-      }
+      selectedDate: String
     },
 
     observers: [
@@ -152,6 +166,9 @@ Fired when selecting a specific day of the month.
     ready: function() {
       this.dateUtils = this.$.dateUtils;
       this.nowDate = new Date();
+      this.weekdays = this.dataHost.getShortDayNames();
+
+      addEventListener('keyup', this.keyup.bind(this));
     },
 
     isSameDay: function(d1, d2) {
@@ -174,8 +191,15 @@ Fired when selecting a specific day of the month.
       if (this.dateUtils.isEqualMonth(oldDate, newDate)) {
         return;
       }
+
       this.reverseAnimation = oldDate && oldDate.getTime() > newDate.getTime();
       this.dataHost.renderNode(this.$.days.querySelector('.weeks'), this.reverseAnimation);
+      this.dataHost.renderNode(this.$$('.viewingMonthYear'), this.reverseAnimation);
+
+      this.async(function() {
+        this.viewingMonth = this.dataHost.getFullMonth(this.date);
+        this.viewingYear = this.date.getFullYear();
+      });
     },
 
     enhanceWeeks: function(full) {
@@ -199,6 +223,29 @@ Fired when selecting a specific day of the month.
     selectDay: function(e) {
       var selectedDate = e.target.hasAttribute('date') ? e.target.getAttribute('date') : e.target.parentNode.getAttribute('date');
       this.fire('paper-calendar-day-selected', {day: selectedDate});
+    },
+
+    viewSelectAction: function() {
+      this.fire('paper-calendar-view-selected');
+    },
+
+    prevAction: function() {
+      this.date = this.dateUtils.addMonths(this.date, -1);
+    },
+
+    nextAction: function() {
+      this.date = this.dateUtils.addMonths(this.date, 1);
+    },
+
+    keyup: function(e){
+      switch (e.keyCode) {
+        case 37:
+          this.prevAction();
+          break;
+        case 39:
+          this.nextAction();
+          break;
+      }
     }
   });
 
